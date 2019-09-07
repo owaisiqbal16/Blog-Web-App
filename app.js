@@ -1,6 +1,7 @@
-// Installed body-pareser, mongoose,express, ejs, method-override
+// Installed body-pareser, mongoose,express, ejs, method-override , express-sanitizer
 //IMPORTING ELEMENTS
 var bodyParser = require("body-parser"),
+    expressSanitizer = require("express-sanitizer"),
     mongoose = require("mongoose"),
     express = require("express"),
     app = express(),
@@ -12,6 +13,9 @@ mongoose.connect("mongodb://localhost:27017/restful_blog_app", { useNewUrlParser
 app.set("view engine", "ejs"); //Now we don't necessarily have to put .ejs in file names below.
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(expressSanitizer());
+// It should always be after body parser.
+// Use it in both Create and Update routes
 app.use(methodOverride("_method"));
 
 // MONGOOSE & MODEL CONFIG
@@ -48,6 +52,7 @@ app.get("/blogs/new", function (req, res) {
 // CREATE ROUTE
 app.post("/blogs", function (req, res) {
     //create blog
+    req.body.blog.body = req.sanitize(req.body.blog.body); // thats => req.body.blog[body]
     Blog.create(req.body.blog, function (err, newBlog) {
         if (err) {
             res.render("new");
@@ -85,6 +90,7 @@ app.get("/blogs/:id/edit", function (req, res) {
 
 //UPDATE ROUTE
 app.put("/blogs/:id", function (req, res) {
+    req.body.blog.body = req.sanitize(req.body.blog.body);
     const id = req.params.id,
         data = req.body.blog; //Which is accessed due to body-parser
     Blog.findByIdAndUpdate(id, data, function (err, updatedBlog) {
